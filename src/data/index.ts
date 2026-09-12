@@ -103,5 +103,11 @@ export function getDataset(dynasty: Dynasty): DynastyDataset {
   return visualData;
 }
 
+// The scene deliberately caps visible edges for performance. Detail panels use the
+// complete relationship set so rankings and related-record counts stay truthful.
+export function getDetailDataset(): DynastyDataset {
+  return kplData;
+}
+
 export type { Dynasty, DynastyDataset, Poet, PoemEdge, Relation } from './types';
 

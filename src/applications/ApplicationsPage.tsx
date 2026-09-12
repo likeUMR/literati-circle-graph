@@ -1,21 +1,83 @@
-import { useEffect, useState } from 'react';
+import { lazy, Suspense, useEffect, useRef, useState, type CSSProperties } from 'react';
+import { applicationRecords } from './applicationData';
+import { kplHomeData } from './kplHomeData';
 
-const features = [
-  { number: '01', eyebrow: 'TEAM IP GAME', title: '战队专属游戏', text: '把战队 DNA、阵容关系与真实 BP 记录变成可游玩的战队经理。', tone: 'yellow', mark: 'AG', detail: '阵容化学反应 87 / 100', logo: '/assets/ag-logo.png' },
-  { number: '02', eyebrow: 'FAN CONTENT STUDIO', title: '粉丝内容生产', text: '从一场比赛事实，批量生成海报、选手卡、战报与社交内容包。', tone: 'pink', mark: 'CONTENT', detail: '4 种输出已就绪' },
-  { number: '03', eyebrow: 'CITY MATCHDAY', title: '城市电竞地图', text: '连接主场战队、赛程与城市节点，组织一条可参与的比赛日路线。', tone: 'blue', mark: 'SH', detail: 'POI / 场馆待接入', logo: '/assets/edgm-logo.png' },
-] as const;
+const STATUS_LABEL = { ready: '数据就绪', demo: '可演示', 'needs-data': '待补数据', unimplemented: '未实现' } as const;
+const TYPE_LABEL = { insight: '洞察', content: '内容', game: '互动', city: '城市', unimplemented: '未实现' } as const;
+const ESPORTS_GAME_URL = 'https://origingame.dev/g/edg-5c15/play?v=29';
+const ESPORTS_GAME_COVER = 'https://origingame.ai/api/covers/5c15lv6jai';
+const ESPORTS_MANAGER_URL = 'https://gallery.liruochen.cn/html-wzry/';
+const ESPORTS_MANAGER_COVER = 'https://gallery.liruochen.cn/images/html-wzry.png';
+const TOURISM_MATERIAL_URL = '/assets/tourism-masonry.png';
+const CAREER_CARD_COVER = '/assets/application-covers/career-card.jpg';
+const HISTORY_TODAY_COVER = '/assets/application-covers/history-today.jpg';
+const CareerCardTool = lazy(() => import('./tools/CareerCardTool').then(({ CareerCardTool }) => ({ default: CareerCardTool })));
+const MatchPreviewTool = lazy(() => import('./tools/MatchPreviewTool').then(({ MatchPreviewTool }) => ({ default: MatchPreviewTool })));
+const HistoryTodayTool = lazy(() => import('./tools/HistoryTodayTool').then(({ HistoryTodayTool }) => ({ default: HistoryTodayTool })));
+const LIVE_APP_IDS = ['career-card', 'match-preview', 'history-today'] as const;
+type LiveAppId = typeof LIVE_APP_IDS[number];
+const isLiveApp = (id: string): id is LiveAppId => LIVE_APP_IDS.some((liveId) => liveId === id);
 
 export function ApplicationsPage() {
-  const [active, setActive] = useState(0);
+  const [videoReady, setVideoReady] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
-  useEffect(() => { const onKey = (event: KeyboardEvent) => { if (event.key === 'ArrowRight') setActive((value) => (value + 1) % features.length); if (event.key === 'ArrowLeft') setActive((value) => (value + features.length - 1) % features.length); if (event.key === 'Escape') setMenuOpen(false); }; window.addEventListener('keydown', onKey); return () => window.removeEventListener('keydown', onKey); }, []);
-  return (
-    <main className="origin-home">
-      <header className="origin-nav"><a className="origin-brand" href="#top" aria-label="KPL Knowledge Asset home"><span className="brand-dot" />KPL<span className="brand-muted">/ ASSET</span></a><nav className={menuOpen ? 'nav-links is-open' : 'nav-links'}><a href="#experience">体验</a><a href="#applications">应用</a><a href="#ledger">资产账本</a></nav><div className="nav-actions"><span className="nav-status"><i />DATA ONLINE</span><button className="menu-button" type="button" onClick={() => setMenuOpen((open) => !open)} aria-label="打开菜单"><span /><span /></button></div></header>
-      <section className="origin-hero" id="top"><div className="hero-media" aria-label="星云背景视频预留区域"><div className="media-cross cross-a" /><div className="media-cross cross-b" /><span className="media-label">NEBULA MOTION / MEDIA SLOT</span><span className="media-note">VIDEO SOURCE PENDING</span><div className="media-rings" /></div><div className="hero-copy" id="experience"><p className="hero-kicker">KPL KNOWLEDGE ASSET / 2026</p><h1>让赛事事实<br /><em>开始发生</em></h1><p className="hero-description">23 个赛季，3,399 个节点，111,313 条关系。<br />从一张知识图谱，进入游戏、内容和城市。</p></div><div className="hero-footer"><span>SCROLL TO EXPLORE</span><span className="hero-line" /><span>01 / 03</span></div></section>
-      <section className="feature-section" id="applications"><div className="section-intro"><p className="section-kicker">ONE GRAPH / THREE WORLDS</p><h2>一份资产，<br /><em>三种体验。</em></h2><p>每一项应用都由真实赛事关系驱动。选择一个方向，查看它如何从数据变成可使用的产品。</p><div className="section-count"><b>03</b><span>APPLICATIONS<br />READY TO BUILD</span></div></div><div className="feature-rail">{features.map((feature, index) => <article className={`feature-card tone-${feature.tone} ${index === active ? 'is-active' : ''}`} key={feature.number} onMouseEnter={() => setActive(index)}><div className="card-top"><span>{feature.number}</span><span>{feature.eyebrow}</span><span>↗</span></div><div className="card-art">{feature.logo ? <img src={feature.logo} alt="" /> : <div className="art-type">{feature.mark}</div>}<div className="art-grid" /><span className="art-status">{feature.detail}</span></div><div className="card-copy"><h3>{feature.title}</h3><p>{feature.text}</p><button type="button">打开应用 <span>↗</span></button></div></article>)}</div><div className="rail-controls"><button type="button" onClick={() => setActive((active + features.length - 1) % features.length)} aria-label="上一个应用">←</button><div>{features.map((feature, index) => <button className={index === active ? 'is-current' : ''} type="button" onClick={() => setActive(index)} key={feature.number} aria-label={`查看${feature.title}`}><span /></button>)}</div><button type="button" onClick={() => setActive((active + 1) % features.length)} aria-label="下一个应用">→</button></div></section>
-      <section className="asset-strip" id="ledger"><div><span className="section-kicker">THE SOURCE</span><h2>所有体验，<br />都有出处。</h2></div><div className="ledger-numbers"><span><b>23</b>赛季</span><span><b>332</b>选手</span><span><b>132</b>英雄</span><span><b>2,875</b>系列赛</span></div><p>从俱乐部、选手、英雄、比赛到赛季，事实可回溯，模板可替换，应用可持续生长。</p></section><footer className="origin-footer"><span>KPL KNOWLEDGE ASSET</span><span>BUILT FROM THE GAME</span><span>2026 ↗</span></footer>
-    </main>
-  );
+  const [activeApp, setActiveApp] = useState<string | null>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const { brand, nav, hero, stats, entities, routes, categories, footer } = kplHomeData;
+
+  useEffect(() => { videoRef.current?.play().catch(() => undefined); }, [hero.videoSrc]);
+  useEffect(() => {
+    if (!activeApp) return;
+    const oldOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    closeButtonRef.current?.focus();
+    const onKeyDown = (event: KeyboardEvent) => { if (event.key === 'Escape') setActiveApp(null); };
+    window.addEventListener('keydown', onKeyDown);
+    return () => { document.body.style.overflow = oldOverflow; window.removeEventListener('keydown', onKeyDown); };
+  }, [activeApp]);
+
+  return <main className="kpl-site">
+    <header className="kpl-header">
+      <a className="kpl-logo" href="#home" aria-label="KPL 知识资产首页"><span className="kpl-logo-mark">K</span><span><b>{brand.name}</b><small>{brand.tagline}</small></span></a>
+      <nav className={menuOpen ? 'kpl-nav open' : 'kpl-nav'}>{nav.map((item) => <a href={item.href} key={item.label} onClick={() => setMenuOpen(false)}>{item.label}</a>)}</nav>
+      <div className="kpl-header-actions"><span className="kpl-data-state"><i /> DATA ONLINE</span><a className="kpl-enter" href="./">进入星图 <b>↗</b></a><button className="kpl-menu" type="button" onClick={() => setMenuOpen((value) => !value)} aria-label="打开导航"><i /><i /></button></div>
+    </header>
+
+    <section className="kpl-hero" id="home" onClick={(event) => {
+      if ((event.target as HTMLElement).closest('a, button')) return;
+      window.location.assign('./');
+    }}>
+      <div className="kpl-hero-media"><video ref={videoRef} autoPlay muted loop playsInline onPlaying={() => setVideoReady(true)} className={videoReady ? 'ready' : ''}><source src={hero.videoSrc} type="video/mp4" /></video><div className="kpl-hero-wash" /></div>
+      <a className="kpl-hero-navigation" href="./" aria-label="进入 KPL 星图" title="进入 KPL 星图" />
+      <div className="kpl-hero-content"><p className="kpl-kicker"><span>●</span> {hero.kicker}</p><h1>{hero.titleLead}<br /><mark>{hero.titleMark}</mark>{hero.titleTail}</h1><p className="kpl-hero-sub">{hero.subline}</p><a className="kpl-primary-entry" href={hero.ctaHref}><span>↓</span><b>{hero.ctaLabel}</b></a></div>
+      <div className="kpl-hero-bottom" id="assets"><div className="kpl-stats">{stats.map((stat) => <span key={stat.label}><b>{stat.value}</b>{stat.label}</span>)}</div><div className="kpl-entity-strip"><small>CORE<br />ENTITIES</small>{entities.map((entity) => <span key={entity.name}><i />{entity.name}</span>)}<span className="kpl-mini-brand">KPL<br /><small>KNOWLEDGE ASSET</small></span></div></div>
+      <button className="kpl-scroll" type="button" onClick={() => document.getElementById('roadmap')?.scrollIntoView({ behavior: 'smooth' })} aria-label="继续浏览">⌄</button>
+    </section>
+
+    <div className="kpl-page" id="roadmap">
+      <section className="kpl-routes">{routes.map((route) => <a className="kpl-route" href={route.href} key={route.kicker}><div><small>{route.kicker}</small><h2>{route.title}</h2><p>{route.description}</p></div><b>↗</b></a>)}</section>
+      <section className="kpl-section"><div className="kpl-section-title"><div><small>ASSET APPLICATION ROUTE</small><h2>资产应用路线</h2></div><span>10 个方向</span></div><div className="kpl-category-grid">{categories.map((category, index) => <a className="kpl-category" href="#applications" key={category.label} style={{ '--category-color': category.color } as CSSProperties}><img src={category.image} alt="" loading="lazy" /><span>{String(index + 1).padStart(2, '0')}</span><b>{category.label}</b><i>↗</i></a>)}</div></section>
+      <section className="kpl-section" id="applications">
+        <div className="kpl-section-title"><div><small>FIRST BATCH / V1</small><h2><span className="kpl-star">✦</span> 首批应用</h2></div><span>12 项应用</span></div>
+        <div className="kpl-gallery"><div className="kpl-application-track">
+          {applicationRecords.concat(applicationRecords).map((application, index) => {
+            const isDuplicate = index >= applicationRecords.length;
+            const coverImage = application.id === 'career-card' ? CAREER_CARD_COVER : application.id === 'history-today' ? HISTORY_TODAY_COVER : isDuplicate || application.status === 'unimplemented' ? undefined : application.id === 'team-manager' ? ESPORTS_MANAGER_COVER : application.type === 'city' ? TOURISM_MATERIAL_URL : application.type === 'game' ? ESPORTS_GAME_COVER : undefined;
+            const card = <><div className={'kpl-application-cover ' + (coverImage ? 'has-image' : '')}>{coverImage && <img src={coverImage} alt="" />}<span>{application.label}</span><small>{TYPE_LABEL[application.type]}</small></div><div className="kpl-application-meta"><div><b>{application.title}</b><small>{application.evidence.metric ?? application.summary}</small></div><em className={'status-' + application.status}>{isLiveApp(application.id) ? '打开 ↗' : STATUS_LABEL[application.status]}</em></div></>;
+            const style = { '--card-color': categories[index % categories.length].color } as CSSProperties;
+            const key = application.id + '-' + index;
+            if (isLiveApp(application.id)) return <button className="kpl-application-card kpl-app-button" type="button" onClick={() => setActiveApp(application.id)} key={key} style={style}>{card}</button>;
+            if (application.status === 'unimplemented') return <article className="kpl-application-card" key={key} style={style}>{card}</article>;
+            if (application.type === 'game') return <a className="kpl-application-card" href={application.id === 'team-manager' ? ESPORTS_MANAGER_URL : ESPORTS_GAME_URL} target="_blank" rel="noreferrer" key={key} style={style}>{card}</a>;
+            if (application.type === 'city') return <a className="kpl-application-card" href={TOURISM_MATERIAL_URL} target="_blank" rel="noreferrer" key={key} style={style}>{card}</a>;
+            return <article className="kpl-application-card" key={key} style={style}>{card}</article>;
+          })}
+        </div></div>
+      </section>
+      <section className="kpl-brand-bar"><span>✦</span><div><b>{brand.name}</b><small>{brand.tagline}</small></div><p>{footer.tagline}</p></section>
+    </div>
+    <footer className="kpl-footer"><span>{brand.name} KNOWLEDGE ASSET</span><span>{footer.tagline}</span><span>{footer.copyright}</span></footer>
+    {activeApp && <div className="kpl-tool-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget) setActiveApp(null); }}><div className="kpl-tool-dialog" role="dialog" aria-modal="true" aria-label={applicationRecords.find((application) => application.id === activeApp)?.title}><button ref={closeButtonRef} className="kpl-tool-exit" type="button" aria-label="关闭应用" onClick={() => setActiveApp(null)}>×</button><Suspense fallback={<p className="kpl-tool-loading">正在加载赛事数据…</p>}>{activeApp === 'career-card' ? <CareerCardTool /> : activeApp === 'match-preview' ? <MatchPreviewTool /> : <HistoryTodayTool />}</Suspense></div></div>}
+  </main>;
 }

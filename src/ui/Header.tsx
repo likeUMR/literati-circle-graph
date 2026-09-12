@@ -20,10 +20,11 @@ export function Header() {
   const search = useAppStore((s) => s.searchQuery);
   const setSearch = useAppStore((s) => s.setSearchQuery);
   const openPanel = useAppStore((s) => s.openPanel);
+  const displayRatio = useAppStore((s) => s.displayRatio);
 
   const [focused, setFocused] = useState(false);
 
-  const data = getDataset(dynasty);
+  const data = getDataset(dynasty, displayRatio);
 
   const candidates = useMemo(() => {
     if (!search.trim()) return [] as Poet[];
@@ -127,6 +128,14 @@ export function Header() {
           </ul>
         )}
       </div>
+      <a
+        className="star-map-applications-link"
+        href="applications.html"
+        aria-label="前往 KPL 应用展示"
+      >
+        <span>应用展示</span>
+        <b aria-hidden="true">↗</b>
+      </a>
     </header>
   );
 }

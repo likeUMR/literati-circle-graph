@@ -15,8 +15,9 @@ export function Legend() {
   const selectedPoetId = useAppStore((s) => s.selectedPoetId);
   const openPanel = useAppStore((s) => s.openPanel);
   const setSelectedPoet = useAppStore((s) => s.setSelectedPoet);
+  const displayRatio = useAppStore((s) => s.displayRatio);
 
-  const data = getDataset(dynasty);
+  const data = getDataset(dynasty, displayRatio);
   const mode: 'in' | 'out' = panelOpen ? 'out' : 'in';
 
   const ranked = useMemo(() => {

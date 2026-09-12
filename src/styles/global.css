@@ -37,6 +37,42 @@ a {
   color: inherit;
 }
 
+.star-map-applications-link {
+  position: fixed;
+  right: 18px;
+  bottom: 18px;
+  z-index: 9;
+  pointer-events: auto;
+  height: 32px;
+  padding: 0 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid rgba(232, 193, 108, 0.3);
+  border-radius: 16px;
+  background: rgba(0, 0, 0, 0.55);
+  box-shadow: inset 0 0 18px rgba(232, 193, 108, 0.04), 0 0 16px rgba(232, 193, 108, 0.08);
+  color: #e6e6e6;
+  font-family: 'Inter', 'Noto Sans SC', sans-serif;
+  font-size: 12px;
+  text-decoration: none;
+  transition: border-color 160ms ease, background 160ms ease, box-shadow 160ms ease;
+}
+
+.star-map-applications-link b {
+  color: #f1c36b;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.star-map-applications-link:hover,
+.star-map-applications-link:focus-visible {
+  border-color: rgba(232, 193, 108, 0.68);
+  background: rgba(18, 16, 11, 0.72);
+  box-shadow: inset 0 0 18px rgba(232, 193, 108, 0.08), 0 0 20px rgba(232, 193, 108, 0.16);
+  outline: none;
+}
+
 /* Overlay panels use a restrained scrollbar that stays inside the star-map palette. */
 * {
   scrollbar-width: thin;

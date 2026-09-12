@@ -20,7 +20,11 @@ interface AppState {
   autoRotate: boolean;
   searchQuery: string;
   lineStyle: LineStyle;
+  displayRatio: number;
+  dataRevision: number;
   setLineStyle: (s: LineStyle) => void;
+  setDisplayRatio: (ratio: number) => void;
+  refreshData: () => void;
   setDynasty: (d: Dynasty) => void;
   setSelectedPoet: (id: string | null) => void;
   openPanel: (id: string) => void;
@@ -54,7 +58,12 @@ export const useAppStore = create<AppState>((set) => ({
   autoRotate: true,
   searchQuery: '',
   lineStyle: 'original',
+  // Preserve the previous visual scale by default: 268 displayed nodes / 3399 full nodes.
+  displayRatio: 268 / 3399,
+  dataRevision: 0,
   setLineStyle: (s) => set({ lineStyle: s }),
+  setDisplayRatio: (ratio) => set({ displayRatio: Math.max(0.01, Math.min(1, ratio)) }),
+  refreshData: () => set((state) => ({ dataRevision: state.dataRevision + 1 })),
   setDynasty: (d) => set({ dynasty: d, selectedPoetId: null, selectedEdgeId: null, panelOpen: false, modalPoem: null }),
   setSelectedPoet: (id) => set({ selectedPoetId: id, selectedEdgeId: null }),
   openPanel: (id) => set({ selectedPoetId: id, selectedEdgeId: null, panelOpen: true }),

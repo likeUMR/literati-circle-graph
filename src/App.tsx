@@ -7,12 +7,18 @@ import { EdgePanel } from './ui/EdgePanel';
 import { FilterPanel } from './ui/FilterPanel';
 import { LineStyleSwitcher } from './ui/LineStyleSwitcher';
 import { PoemModal } from './ui/PoemModal';
-import { getDataset } from './data';
+import { getDataset, loadFullDataset } from './data';
+import { useEffect } from 'react';
 import { useAppStore } from './state/store';
 
 export default function App() {
   const dynasty = useAppStore((s) => s.dynasty);
-  const data = getDataset(dynasty);
+  const displayRatio = useAppStore((s) => s.displayRatio);
+  const refreshData = useAppStore((s) => s.refreshData);
+  useEffect(() => {
+    if (displayRatio > 268 / 3399) loadFullDataset().then(refreshData);
+  }, [displayRatio, refreshData]);
+  const data = getDataset(dynasty, displayRatio);
 
   return (
     <>

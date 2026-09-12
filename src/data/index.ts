@@ -1,5 +1,12 @@
 import type { Dynasty, DynastyDataset } from './types';
 import { kplData } from './kpl.generated';
+let fullData: DynastyDataset | null = null;
+let fullDataPromise: Promise<DynastyDataset> | null = null;
+export function loadFullDataset(): Promise<DynastyDataset> {
+  if (fullData) return Promise.resolve(fullData);
+  fullDataPromise ??= import('./kpl.full.generated').then((module) => (fullData = module.kplData));
+  return fullDataPromise;
+}
 
 // 1. 过滤掉引用了不存在 poet id 的 edge（防止数据笔误抛 d3-force "node not found"）
 // 2. 过滤孤立 poet：只保留至少出现在一条 valid edge 上的诗人
@@ -33,7 +40,9 @@ function prune(raw: DynastyDataset): DynastyDataset {
   };
 }
 
-function buildVisualDataset(raw: DynastyDataset): DynastyDataset {
+function buildVisualDataset(raw: DynastyDataset, displayRatio = 1): DynastyDataset {
+  const ratio = Math.max(0.01, Math.min(1, displayRatio));
+  const baselineRatio = 268 / 3399;
   const degree = new Map<string, number>();
   for (const edge of raw.edges) {
     const value = Math.max(1, edge.weight ?? 1);
@@ -41,19 +50,14 @@ function buildVisualDataset(raw: DynastyDataset): DynastyDataset {
     degree.set(edge.target, (degree.get(edge.target) ?? 0) + value);
   }
 
-  const limits: Record<NonNullable<(typeof raw.poets)[number]['type']>, number> = {
-    Season: 23,
-    Club: 37,
-    Player: 260,
-    Hero: 132,
-    Match: 90,
-  };
+  const limits = new Map<string, number>();
+  for (const node of raw.poets) limits.set(node.type ?? 'Player', (limits.get(node.type ?? 'Player') ?? 0) + 1);
   const selected = new Set<string>();
-  for (const type of Object.keys(limits) as Array<keyof typeof limits>) {
+  for (const type of limits.keys()) {
     raw.poets
       .filter((node) => node.type === type)
       .sort((a, b) => (degree.get(b.id) ?? 0) - (degree.get(a.id) ?? 0))
-      .slice(0, limits[type])
+      .slice(0, Math.max(1, Math.round((limits.get(type) ?? 0) * ratio)))
       .forEach((node) => selected.add(node.id));
   }
 
@@ -74,10 +78,16 @@ function buildVisualDataset(raw: DynastyDataset): DynastyDataset {
       return priority || (b.weight ?? 1) - (a.weight ?? 1);
     });
 
+  // Keep the previous 1,800-edge default while 100% expands to the full graph.
+  const edgeRatio = ratio <= baselineRatio
+    ? ratio / baselineRatio
+    : 1 + ((ratio - baselineRatio) / (1 - baselineRatio)) * ((raw.edges.length / 1800) - 1);
+  const edgeLimit = Math.max(1, Math.min(raw.edges.length, Math.round(1800 * edgeRatio)));
   const visualEdges: typeof raw.edges = [];
   const edgeSet = new Set<typeof raw.edges[number]>();
   const connected = new Set<string>();
   for (const edge of candidates) {
+    if (visualEdges.length >= edgeLimit) break;
     if (connected.has(edge.source) && connected.has(edge.target)) continue;
     visualEdges.push(edge);
     edgeSet.add(edge);
@@ -85,7 +95,7 @@ function buildVisualDataset(raw: DynastyDataset): DynastyDataset {
     connected.add(edge.target);
   }
   for (const edge of candidates) {
-    if (visualEdges.length >= 1800) break;
+    if (visualEdges.length >= edgeLimit) break;
     if (edgeSet.has(edge)) continue;
     visualEdges.push(edge);
   }
@@ -96,17 +106,19 @@ function buildVisualDataset(raw: DynastyDataset): DynastyDataset {
   });
 }
 
-const visualData = buildVisualDataset(kplData);
-
-export function getDataset(dynasty: Dynasty): DynastyDataset {
+export function getDataset(dynasty: Dynasty, displayRatio = 1): DynastyDataset {
   void dynasty;
-  return visualData;
+  const source = fullData ?? kplData;
+  const baselineRatio = 268 / 3399;
+  if (!fullData && displayRatio <= baselineRatio * 1.05) return source;
+  const sourceRatio = fullData ? displayRatio : Math.min(1, displayRatio / baselineRatio);
+  return displayRatio === 1 && fullData ? source : buildVisualDataset(source, sourceRatio);
 }
 
-// The scene deliberately caps visible edges for performance. Detail panels use the
-// complete relationship set so rankings and related-record counts stay truthful.
+// Detail panels use the complete relationship set so rankings and related-record
+// counts stay truthful. The scene display ratio controls the visual sample size.
 export function getDetailDataset(): DynastyDataset {
-  return kplData;
+  return fullData ?? kplData;
 }
 
 export type { Dynasty, DynastyDataset, Poet, PoemEdge, Relation } from './types';

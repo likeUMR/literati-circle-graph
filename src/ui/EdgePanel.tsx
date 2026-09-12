@@ -7,7 +7,8 @@ import { relationLabel } from './graphLabels';
 export function EdgePanel() {
   const edgeId = useAppStore((s) => s.selectedEdgeId);
   const close = useAppStore((s) => s.closePanel);
-  const data = getDataset('宋');
+  const displayRatio = useAppStore((s) => s.displayRatio);
+  const data = getDataset('宋', displayRatio);
   const edge = data.edges.find((e) => `${e.source}|${e.target}|${e.relation}` === edgeId);
   const byId = new Map(data.poets.map((p) => [p.id, p.name]));
   return <AnimatePresence>{edge && <motion.aside initial={{ x: 32, opacity: 0 }} animate={{ x: 0, opacity: 1 }} exit={{ x: 32, opacity: 0 }} style={{ position: 'fixed', right: 16, top: 96, bottom: 130, width: 340, maxWidth: 'calc(100vw - 32px)', zIndex: 6, padding: '16px 18px', border: `1px solid ${color.panelBorder}`, borderRadius: 12, background: color.panelBg, backdropFilter: 'blur(10px)', color: color.textSecondary, fontFamily: font.uiSans }}>

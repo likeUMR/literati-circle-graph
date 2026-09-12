@@ -5,7 +5,7 @@
 ```ts
 {
   id: string;                         // 稳定 ID，用于缓存和埋点
-  type: 'game'|'content'|'city'|'insight';
+  type: 'game'|'content'|'city'|'insight'|'unimplemented';
   title: string; label: string;       // 展示名称和英文标签
   summary: string;                    // 一句话价值说明
   source: string[];                   // 数据实体类型
@@ -23,11 +23,11 @@
     metric?: string;                  // 展示用规模或验证指标
     refs: string[];                    // 文件、接口或查询结果引用
   };
-  status: 'demo'|'ready'|'needs-data'; // 当前可演示程度
+  status: 'demo'|'ready'|'needs-data'|'unimplemented'; // 当前可演示程度
 }
 ```
 
-当前第一批 12 条案例在 `applicationData.ts` 中，覆盖：战队 DNA、选手生涯卡、BP 竞猜、赛前预告、智能战报、高光短视频、历史上的今天、战队经理、经典战役重演、城市电竞地图、城市打卡任务、社交内容包。
+当前首批 12 条应用在 `applicationData.ts` 中。选手生涯卡、赛前预告、历史上的今天已接入可操作工具；电竞经理、电竞 MiniGame 与电竞文旅物料保留现有入口；BP 竞猜、城市打卡任务明确标记为未实现。
 
 接真实后端时建议提供：
 

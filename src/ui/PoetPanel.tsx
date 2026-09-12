@@ -14,6 +14,7 @@ const labels: Record<string, string> = {
   current_or_latest_short_name: '常用名称', latest_position_code: '位置编号', season_count: '参赛赛季',
   hero_name: '英雄名称', club_name: '俱乐部名称', season_name: '赛季名称', team_name: '战队名称',
   appearances: '出场次数', position_name: '位置',
+  season_profile_count: '参赛赛季数', hero_count: '使用英雄数',
 };
 const relationLabels: Record<string, string> = {
   FACED: '交手', ROSTERED_PLAYER: '所属阵容', USED_HERO: '使用英雄', FEATURED_HERO: '队伍使用',
@@ -30,8 +31,8 @@ function displayValue(key: string, value: unknown): string {
 
 function friendlyStats(poet: Poet): [string, string][] {
   if (!poet.stats) return [];
-  const hidden = ['id', 'source', 'data_source', 'updated_at', 'source_endpoint', 'hero_id', 'player_id', 'club_id', 'season_id', 'icon_ref', 'hero_icon', 'logo_url', 'icon_url', 'position_code'];
-  return Object.entries(poet.stats).filter(([key, value]) => Boolean(displayValue(key, value)) && !hidden.some((x) => key === x || key.includes(x)))
+  const hidden = ['id', 'source', 'data_source', 'updated_at', 'source_endpoint', 'hero_id', 'player_id', 'club_id', 'season_id', 'icon_ref', 'hero_icon', 'logo_url', 'logo_urls', 'icon_url', 'avatar_url', 'avatar_urls', 'position_code', 'latest_position_code', 'top_heroes', 'aliases_json', 'season_ids', 'club_ids', 'team_season_ids', 'official_roles', 'competitive_positions'];
+  return Object.entries(poet.stats).filter(([key, value]) => Boolean(displayValue(key, value)) && !hidden.some((x) => key === x || key.includes(x)) && !key.endsWith('_id') && !key.endsWith('_url') && !key.endsWith('_urls') && !key.endsWith('_code') && !key.endsWith('_at') && !key.endsWith('_json'))
     .map(([key, value]) => [labels[key] ?? key, displayValue(key, value)] as [string, string])
     .filter(([label]) => !label.includes('properties') && !label.includes('history') && !label.includes('metrics'))
     .slice(0, 6);

@@ -25,6 +25,7 @@ export interface KplHomeData {
 }
 
 const publicBase = import.meta.env.BASE_URL;
+const asset = (path: string) => `${publicBase}assets/${path}`;
 
 export const kplHomeData: KplHomeData = {
   brand: { name: 'KPL', tagline: 'KNOWLEDGE ASSET' },
@@ -57,16 +58,16 @@ export const kplHomeData: KplHomeData = {
     { kicker: 'APPLICATION LAYER', title: '从关系生成应用', description: '围绕真实赛事事实，生产洞察、内容、互动游戏与城市体验。', href: '#applications' },
   ],
   categories: [
-    { label: '战队洞察', color: '#f2c94c', image: '/assets/application-routes/team-insight.jpg' },
-    { label: '选手档案', color: '#ef6d88', image: '/assets/application-routes/player-profile.jpg' },
-    { label: 'BP 互动', color: '#50b9c8', image: '/assets/application-routes/bp-interaction.jpg' },
-    { label: '赛前内容', color: '#799bdd', image: '/assets/application-routes/pregame-content.jpg' },
-    { label: '赛后内容', color: '#e98c55', image: '/assets/application-routes/postgame-content.jpg' },
-    { label: '视频生产', color: '#68bea0', image: '/assets/application-routes/video-production.jpg' },
-    { label: '历史内容', color: '#ab83c9', image: '/assets/application-routes/history-content.jpg' },
-    { label: '互动游戏', color: '#e8bd3e', image: '/assets/application-routes/interactive-game.jpg' },
-    { label: '城市体验', color: '#5ea7d7', image: '/assets/application-routes/city-experience.jpg' },
-    { label: '社交传播', color: '#dc708b', image: '/assets/application-routes/social-sharing.jpg' },
+    { label: '战队洞察', color: '#f2c94c', image: asset('application-routes/team-insight.jpg') },
+    { label: '选手档案', color: '#ef6d88', image: asset('application-routes/player-profile.jpg') },
+    { label: 'BP 互动', color: '#50b9c8', image: asset('application-routes/bp-interaction.jpg') },
+    { label: '赛前内容', color: '#799bdd', image: asset('application-routes/pregame-content.jpg') },
+    { label: '赛后内容', color: '#e98c55', image: asset('application-routes/postgame-content.jpg') },
+    { label: '视频生产', color: '#68bea0', image: asset('application-routes/video-production.jpg') },
+    { label: '历史内容', color: '#ab83c9', image: asset('application-routes/history-content.jpg') },
+    { label: '互动游戏', color: '#e8bd3e', image: asset('application-routes/interactive-game.jpg') },
+    { label: '城市体验', color: '#5ea7d7', image: asset('application-routes/city-experience.jpg') },
+    { label: '社交传播', color: '#dc708b', image: asset('application-routes/social-sharing.jpg') },
   ],
   footer: { tagline: '让每一条数据更精彩', copyright: '2026 / V1' },
 }

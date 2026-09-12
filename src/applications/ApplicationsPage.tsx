@@ -1,180 +1,21 @@
-import { useEffect, useMemo, useState, type CSSProperties } from 'react';
+import { useEffect, useState } from 'react';
 
-type Tone = 'amber' | 'cyan' | 'coral' | 'mint' | 'violet';
-type Visual = 'arena' | 'poster' | 'map' | 'draft' | 'timeline' | 'signal' | 'cards' | 'radar';
-
-interface Capability {
-  id: string;
-  kicker: string;
-  title: string;
-  copy: string;
-  source: string;
-  metric?: string;
-  tone: Tone;
-  visual: Visual;
-  size: 'compact' | 'medium' | 'tall' | 'hero';
-  featured?: boolean;
-}
-
-interface RouteStage {
-  number: string;
-  label: string;
-  title: string;
-  copy: string;
-  input: string;
-  output: string;
-  proof: string;
-  tone: Tone;
-}
-
-const routeStages: RouteStage[] = [
-  { number: '01', label: 'READ', title: '读懂资产', copy: '把节点和关系变成可解释的战队、选手、英雄与赛季洞察。', input: '图谱节点 / 关系 / 时间', output: '战队 DNA、英雄池、宿敌指数', proof: '可复用洞察组件', tone: 'amber' },
-  { number: '02', label: 'PACKAGE', title: '包装内容', copy: '同一条事实一次查询，多端输出成稿、海报、数据卡和视频脚本。', input: '洞察 + 比赛上下文', output: '赛前预告、战报、社媒内容包', proof: '发布时效 < 10 min', tone: 'cyan' },
-  { number: '03', label: 'PLAY', title: '做成互动', copy: '把真实数据变成可以参与的选择、竞猜、剧情和训练挑战。', input: '阵容 / BP / 交手历史', output: '专属游戏、BP 竞猜、阵容挑战', proof: '互动完成率 / 留存', tone: 'coral' },
-  { number: '04', label: 'CONNECT', title: '连接城市', copy: '将主场、赛程和粉丝行为组织成比赛日路线与城市电竞地图。', input: '地点 + 赛程 + 粉丝偏好', output: '打卡任务、观赛路线、联名权益', proof: '到场转化 / 消费核销', tone: 'mint' },
-];
-
-const capabilities: Capability[] = [
-  { id: 'team-game', kicker: 'IP GAME', title: '战队专属游戏', copy: '将队史、宿敌与招牌英雄转化为可玩的俱乐部叙事。', source: '战队 × 选手 × 英雄', metric: '一键换队', tone: 'amber', visual: 'arena', size: 'hero', featured: true },
-  { id: 'player-card', kicker: 'FAN IDENTITY', title: '选手生涯卡', copy: '自动汇总效力轨迹、常用英雄与高光赛季。', source: '选手 × 赛季', tone: 'cyan', visual: 'cards', size: 'medium' },
-  { id: 'bp-quiz', kicker: 'LIVE PLAY', title: 'BP 竞猜', copy: '从真实阵容关系生成赛前竞猜与解题挑战。', source: '635 局 BP 数据', metric: '实时互动', tone: 'coral', visual: 'draft', size: 'tall' },
-  { id: 'rivalry', kicker: 'RIVALRY', title: '宿敌对决', copy: '把历史交手强度变成挑战关卡与胜负叙事。', source: '战队 × 战队', tone: 'violet', visual: 'signal', size: 'compact' },
-  { id: 'fan-studio', kicker: 'CONTENT STUDIO', title: '粉丝内容工厂', copy: '选择战队、选手和比赛，即时生成一套专属应援内容。', source: '偏好 × 图谱事实', metric: '千人千面', tone: 'coral', visual: 'poster', size: 'hero', featured: true },
-  { id: 'preview', kicker: 'MATCH DAY', title: '赛前预告', copy: '近期状态、历史交手和看点自动成稿。', source: '比赛 × 战绩', tone: 'mint', visual: 'signal', size: 'medium' },
-  { id: 'today', kicker: 'ARCHIVE', title: '历史上的今天', copy: '让十年赛事档案持续回到内容流。', source: '23 个赛季', tone: 'amber', visual: 'timeline', size: 'tall' },
-  { id: 'recap', kicker: 'AUTO RECAP', title: '智能战报', copy: '比分、阵容和关键关系组成结构化赛后内容。', source: '2,875 场比赛', tone: 'cyan', visual: 'radar', size: 'compact' },
-  { id: 'city-map', kicker: 'CITY EXPERIENCE', title: '城市电竞地图', copy: '把主场、赛程、打卡与本地消费组织成比赛日路线。', source: '城市 × 战队 × 赛程', metric: '连接线下', tone: 'mint', visual: 'map', size: 'hero', featured: true },
-  { id: 'route', kicker: 'MATCH ROUTE', title: '观赛路线', copy: '从到站、场馆到赛后活动的一站式动线。', source: '场馆 × 活动', tone: 'violet', visual: 'map', size: 'medium' },
-  { id: 'checkin', kicker: 'CITY BADGE', title: '城市打卡任务', copy: '用战队故事串起场馆、商圈和限定纪念章。', source: '地点 × IP', tone: 'amber', visual: 'cards', size: 'tall' },
-  { id: 'radar', kicker: 'TEAM DNA', title: '战队 DNA', copy: '从阵容偏好、选手关系和历史成绩提炼战队特征。', source: '111,313 条关系', tone: 'cyan', visual: 'radar', size: 'tall' },
-  { id: 'hero-pool', kicker: 'PLAYER INSIGHT', title: '英雄池画像', copy: '呈现选手跨赛季的使用、胜率与搭配倾向。', source: '55,840 条出场', tone: 'mint', visual: 'draft', size: 'medium' },
-  { id: 'highlights', kicker: 'VIDEO ENGINE', title: '高光短视频', copy: '图谱负责识别人物与比赛，视频链路负责寻找画面。', source: '比赛 × 高光', tone: 'coral', visual: 'poster', size: 'tall' },
-  { id: 'story', kicker: 'STORY ENGINE', title: '经典战役重演', copy: '真实对局成为分支剧情、问答和关键决策。', source: '比赛 × 小局', tone: 'violet', visual: 'arena', size: 'medium' },
-  { id: 'social', kicker: 'SOCIAL KIT', title: '社交内容包', copy: '一场比赛同时产出封面、短文案与数据卡。', source: '单次查询，多端输出', tone: 'amber', visual: 'poster', size: 'compact' },
-  { id: 'brand', kicker: 'BRAND LAB', title: '品牌联名内容', copy: '让赞助权益进入互动玩法和个性化物料。', source: '品牌 × 场景', tone: 'cyan', visual: 'cards', size: 'medium' },
-  { id: 'trend', kicker: 'META WATCH', title: '版本趋势', copy: '追踪英雄热度、组合关系与赛季环境迁移。', source: '英雄 × 赛季', tone: 'coral', visual: 'timeline', size: 'tall' },
-  { id: 'memory', kicker: 'DIGITAL MEMORY', title: '数字纪念票', copy: '依据到场比赛生成专属、可追溯的观赛记忆。', source: '粉丝 × 比赛', tone: 'mint', visual: 'cards', size: 'compact' },
-  { id: 'lineup', kicker: 'MANAGER MODE', title: '阵容挑战', copy: '用真实队友关系和英雄搭配构建策略题。', source: '选手 × 英雄 × 队友', tone: 'violet', visual: 'draft', size: 'medium' },
-];
-
-const columns = [
-  ['team-game', 'player-card', 'bp-quiz', 'rivalry'],
-  ['preview', 'fan-studio', 'today', 'recap'],
-  ['radar', 'hero-pool', 'highlights', 'social'],
-  ['city-map', 'route', 'checkin'],
-  ['story', 'brand', 'trend', 'memory', 'lineup'],
-];
-
-const offsets = [44, 142, 78, 186, 22];
-const speeds = [0.035, -0.025, 0.018, -0.032, 0.028];
-
-function CardVisual({ kind }: { kind: Visual }) {
-  if (kind === 'map') return <div className="visual map-visual"><i /><i /><i /><span /></div>;
-  if (kind === 'poster') return <div className="visual poster-visual"><b>KPL</b><span>NOW / CREATE</span><i /></div>;
-  if (kind === 'arena') return <div className="visual arena-visual"><span className="arena-core">VS</span><i /><i /></div>;
-  if (kind === 'draft') return <div className="visual draft-visual">{[1, 2, 3, 4, 5].map((n) => <i key={n}>{n}</i>)}</div>;
-  if (kind === 'timeline') return <div className="visual timeline-visual"><span /><span /><span /><span /></div>;
-  if (kind === 'signal') return <div className="visual signal-visual"><i /><i /><i /><i /><i /></div>;
-  if (kind === 'cards') return <div className="visual cards-visual"><i /><i /><i /></div>;
-  return <div className="visual radar-visual"><i /><span /><b /></div>;
-}
-
-function CapabilityCard({ item }: { item: Capability }) {
-  return (
-    <article className={`capability-card ${item.size} tone-${item.tone} ${item.featured ? 'featured' : ''}`}>
-      <div className="card-index">{item.id.slice(0, 2).toUpperCase()}</div>
-      <div className="card-kicker">{item.kicker}</div>
-      <CardVisual kind={item.visual} />
-      <div className="card-content">
-        <h2>{item.title}</h2>
-        <p>{item.copy}</p>
-      </div>
-      <footer>
-        <span>{item.source}</span>
-        {item.metric && <strong>{item.metric}</strong>}
-      </footer>
-    </article>
-  );
-}
+const features = [
+  { number: '01', eyebrow: 'TEAM IP GAME', title: '战队专属游戏', text: '把战队 DNA、阵容关系与真实 BP 记录变成可游玩的战队经理。', tone: 'yellow', mark: 'AG', detail: '阵容化学反应 87 / 100', logo: '/assets/ag-logo.png' },
+  { number: '02', eyebrow: 'FAN CONTENT STUDIO', title: '粉丝内容生产', text: '从一场比赛事实，批量生成海报、选手卡、战报与社交内容包。', tone: 'pink', mark: 'CONTENT', detail: '4 种输出已就绪' },
+  { number: '03', eyebrow: 'CITY MATCHDAY', title: '城市电竞地图', text: '连接主场战队、赛程与城市节点，组织一条可参与的比赛日路线。', tone: 'blue', mark: 'SH', detail: 'POI / 场馆待接入', logo: '/assets/edgm-logo.png' },
+] as const;
 
 export function ApplicationsPage() {
-  const [scrollY, setScrollY] = useState(0);
-  const itemMap = useMemo(() => new Map(capabilities.map((item) => [item.id, item])), []);
-
-  useEffect(() => {
-    let frame = 0;
-    const onScroll = () => {
-      cancelAnimationFrame(frame);
-      frame = requestAnimationFrame(() => setScrollY(window.scrollY));
-    };
-    window.addEventListener('scroll', onScroll, { passive: true });
-    return () => {
-      cancelAnimationFrame(frame);
-      window.removeEventListener('scroll', onScroll);
-    };
-  }, []);
-
+  const [active, setActive] = useState(0);
+  const [menuOpen, setMenuOpen] = useState(false);
+  useEffect(() => { const onKey = (event: KeyboardEvent) => { if (event.key === 'ArrowRight') setActive((value) => (value + 1) % features.length); if (event.key === 'ArrowLeft') setActive((value) => (value + features.length - 1) % features.length); if (event.key === 'Escape') setMenuOpen(false); }; window.addEventListener('keydown', onKey); return () => window.removeEventListener('keydown', onKey); }, []);
   return (
-    <main className="applications-page">
-      <header className="page-header">
-        <div className="brand-lockup"><span className="brand-mark">K</span><span>KPL KNOWLEDGE ASSET</span></div>
-        <div className="asset-count"><b>01</b> ASSET <i /> <b>20</b> APPLICATIONS</div>
-      </header>
-
-      <section className="intro">
-        <div>
-          <p className="eyebrow">FROM GRAPH TO EXPERIENCE / 2026</p>
-          <h1>知识连接事实<br /><em>创意让它发生</em></h1>
-        </div>
-        <div className="intro-copy">
-          <span className="pulse-dot" />
-          <p>同一套 KPL 知识资产，持续驱动游戏、内容与城市体验。</p>
-        </div>
-      </section>
-
-      <section className="route-section" aria-label="从知识资产到应用的路线">
-        <div className="route-heading">
-          <p className="eyebrow">ONE ASSET / FOUR MOVES</p>
-          <h2>从事实，到体验</h2>
-          <p>先建立可复用的洞察，再把洞察编译成内容、互动和线下场景。每一步都有明确的输入、产出与验证。</p>
-        </div>
-        <div className="route-track">
-          {routeStages.map((stage, index) => (
-            <article className={`route-stage tone-${stage.tone}`} key={stage.number}>
-              <div className="route-stage-top"><b>{stage.number}</b><span>{stage.label}</span></div>
-              <h3>{stage.title}</h3>
-              <p>{stage.copy}</p>
-              <dl>
-                <div><dt>输入</dt><dd>{stage.input}</dd></div>
-                <div><dt>产出</dt><dd>{stage.output}</dd></div>
-              </dl>
-              <footer><i />{stage.proof}</footer>
-              {index < routeStages.length - 1 && <span className="route-arrow" aria-hidden="true">→</span>}
-            </article>
-          ))}
-        </div>
-      </section>
-
-      <section className="masonry-stage" aria-label="KPL 衍生应用矩阵">
-        <div className="grid-plane">
-          {columns.map((ids, columnIndex) => (
-            <div
-              className={`capability-column column-${columnIndex + 1}`}
-              key={columnIndex}
-              style={{ '--column-shift': `${offsets[columnIndex] + scrollY * speeds[columnIndex]}px` } as CSSProperties}
-            >
-              {ids.map((id) => {
-                const item = itemMap.get(id);
-                return item ? <CapabilityCard item={item} key={item.id} /> : null;
-              })}
-            </div>
-          ))}
-        </div>
-      </section>
-
-      <footer className="page-footer">
-        <span>23 SEASONS</span><i /><span>3,399 NODES</span><i /><span>111,313 RELATIONS</span>
-      </footer>
+    <main className="origin-home">
+      <header className="origin-nav"><a className="origin-brand" href="#top" aria-label="KPL Knowledge Asset home"><span className="brand-dot" />KPL<span className="brand-muted">/ ASSET</span></a><nav className={menuOpen ? 'nav-links is-open' : 'nav-links'}><a href="#experience">体验</a><a href="#applications">应用</a><a href="#ledger">资产账本</a></nav><div className="nav-actions"><span className="nav-status"><i />DATA ONLINE</span><button className="menu-button" type="button" onClick={() => setMenuOpen((open) => !open)} aria-label="打开菜单"><span /><span /></button></div></header>
+      <section className="origin-hero" id="top"><div className="hero-media" aria-label="星云背景视频预留区域"><div className="media-cross cross-a" /><div className="media-cross cross-b" /><span className="media-label">NEBULA MOTION / MEDIA SLOT</span><span className="media-note">VIDEO SOURCE PENDING</span><div className="media-rings" /></div><div className="hero-copy" id="experience"><p className="hero-kicker">KPL KNOWLEDGE ASSET / 2026</p><h1>让赛事事实<br /><em>开始发生</em></h1><p className="hero-description">23 个赛季，3,399 个节点，111,313 条关系。<br />从一张知识图谱，进入游戏、内容和城市。</p></div><div className="hero-footer"><span>SCROLL TO EXPLORE</span><span className="hero-line" /><span>01 / 03</span></div></section>
+      <section className="feature-section" id="applications"><div className="section-intro"><p className="section-kicker">ONE GRAPH / THREE WORLDS</p><h2>一份资产，<br /><em>三种体验。</em></h2><p>每一项应用都由真实赛事关系驱动。选择一个方向，查看它如何从数据变成可使用的产品。</p><div className="section-count"><b>03</b><span>APPLICATIONS<br />READY TO BUILD</span></div></div><div className="feature-rail">{features.map((feature, index) => <article className={`feature-card tone-${feature.tone} ${index === active ? 'is-active' : ''}`} key={feature.number} onMouseEnter={() => setActive(index)}><div className="card-top"><span>{feature.number}</span><span>{feature.eyebrow}</span><span>↗</span></div><div className="card-art">{feature.logo ? <img src={feature.logo} alt="" /> : <div className="art-type">{feature.mark}</div>}<div className="art-grid" /><span className="art-status">{feature.detail}</span></div><div className="card-copy"><h3>{feature.title}</h3><p>{feature.text}</p><button type="button">打开应用 <span>↗</span></button></div></article>)}</div><div className="rail-controls"><button type="button" onClick={() => setActive((active + features.length - 1) % features.length)} aria-label="上一个应用">←</button><div>{features.map((feature, index) => <button className={index === active ? 'is-current' : ''} type="button" onClick={() => setActive(index)} key={feature.number} aria-label={`查看${feature.title}`}><span /></button>)}</div><button type="button" onClick={() => setActive((active + 1) % features.length)} aria-label="下一个应用">→</button></div></section>
+      <section className="asset-strip" id="ledger"><div><span className="section-kicker">THE SOURCE</span><h2>所有体验，<br />都有出处。</h2></div><div className="ledger-numbers"><span><b>23</b>赛季</span><span><b>332</b>选手</span><span><b>132</b>英雄</span><span><b>2,875</b>系列赛</span></div><p>从俱乐部、选手、英雄、比赛到赛季，事实可回溯，模板可替换，应用可持续生长。</p></section><footer className="origin-footer"><span>KPL KNOWLEDGE ASSET</span><span>BUILT FROM THE GAME</span><span>2026 ↗</span></footer>
     </main>
   );
 }

@@ -10,6 +10,10 @@ export default defineConfig({
   build: {
     chunkSizeWarningLimit: 1500,
     rollupOptions: {
+      input: {
+        starMap: 'index.html',
+        applications: 'applications.html',
+      },
       output: {
         manualChunks: {
           three: ['three', 'three-stdlib'],

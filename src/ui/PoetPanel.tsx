@@ -4,6 +4,48 @@ import { useAppStore } from '../state/store';
 import { getDataset } from '../data';
 import { groupBySender, totalRecipients } from '../utils/group';
 import { color, font } from '../styles/tokens';
+import type { Poet } from '../data/types';
+
+const labels: Record<string, string> = {
+  game_count: '登场小局', game_wins: '获胜小局', game_win_rate: '小局胜率',
+  player_count: '关联选手', club_count: '关联俱乐部', match_count: '系列赛数', game_count_total: '小局数',
+  win_rate: '系列赛胜率', series_win_rate: '系列赛胜率', champion_count: '冠军数',
+  current_or_latest_player_name: '当前比赛 ID', latest_position_name: '常用位置', real_name: '真实姓名',
+  hero_name: '英雄名称', club_name: '俱乐部名称', season_name: '赛季名称', team_name: '战队名称',
+  season_count: '参赛赛季', appearances: '出场次数', position_name: '位置',
+};
+const relationLabels: Record<string, string> = {
+  FACED: '交手', ROSTERED_PLAYER: '所属阵容', USED_HERO: '使用英雄', FEATURED_HERO: '队伍使用',
+  TEAMMATE_OF: '共同出场', TEAMED_WITH: '共同效力', PARTICIPATED_BY: '参赛队伍', NEXT_SEASON: '下一个赛季',
+};
+
+function displayValue(key: string, value: unknown): string {
+  if (value === null || value === undefined || typeof value === 'object') return '';
+  if (key.includes('rate') || key.includes('ratio') || key.endsWith('_cr')) {
+    const n = Number(value); return Number.isFinite(n) ? `${(n * 100).toFixed(1)}%` : String(value);
+  }
+  return String(value);
+}
+
+function friendlyStats(poet: Poet): [string, string][] {
+  if (!poet.stats) return [];
+  const hidden = ['id', 'source', 'data_source', 'updated_at', 'source_endpoint', 'hero_id', 'player_id', 'club_id', 'season_id', 'icon_ref', 'hero_icon', 'logo_url', 'icon_url'];
+  return Object.entries(poet.stats).filter(([key, value]) => Boolean(displayValue(key, value)) && !hidden.some((x) => key === x || key.includes(x)))
+    .map(([key, value]) => [labels[key] ?? key, displayValue(key, value)] as [string, string])
+    .filter(([label]) => !label.includes('properties') && !label.includes('history') && !label.includes('metrics'))
+    .slice(0, 6);
+}
+
+function imageFor(poet: Poet): string | undefined {
+  const stats = poet.stats ?? {};
+  const direct = stats.logo_url ?? stats.player_logo ?? stats.icon_url;
+  if (typeof direct === 'string' && direct.startsWith('http')) return direct;
+  if (poet.type === 'Hero') {
+    const id = stats.hero_id ?? poet.id.split(':').pop();
+    return `https://game.gtimg.cn/images/yxzj/img201606/heroimg/${id}/${id}.jpg`;
+  }
+  return undefined;
+}
 
 export function PoetPanel() {
   const panelOpen = useAppStore((s) => s.panelOpen);
@@ -55,8 +97,9 @@ export function PoetPanel() {
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <div style={{ fontFamily: font.uiSerif, fontSize: 16, color: color.textPrimary }}>
-              {poet.name}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontFamily: font.uiSerif, fontSize: 18, color: color.textPrimary }}>
+              {imageFor(poet) && <img src={imageFor(poet)} alt="" style={{ width: 38, height: 38, borderRadius: '50%', objectFit: 'cover', border: `1px solid ${color.panelBorder}` }} />}
+              <span>{poet.name}</span>
               <span style={{ marginLeft: 8, fontSize: 12, color: color.textMuted, fontFamily: font.uiSans }}>
                 {poet.type ?? '节点'} · {recipientCount} 个关联
               </span>
@@ -78,10 +121,10 @@ export function PoetPanel() {
           </div>
           {poet.stats && (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 6, marginTop: 12 }}>
-              {Object.entries(poet.stats).slice(0, 6).map(([label, value]) => (
+              {friendlyStats(poet).map(([label, value]) => (
                 <div key={label} style={{ background: 'rgba(255,255,255,0.05)', padding: '7px 6px', borderRadius: 6 }}>
                   <div style={{ color: color.textMuted, fontSize: 10 }}>{label}</div>
-                  <div style={{ color: color.goldActive, fontSize: 13, marginTop: 2 }}>{String(value)}</div>
+                  <div style={{ color: color.goldActive, fontSize: 13, marginTop: 2 }}>{value}</div>
                 </div>
               ))}
             </div>
@@ -113,7 +156,7 @@ export function PoetPanel() {
                       letterSpacing: '0.05em',
                     }}
                   >
-                    {g.recipientName} <span style={{ color: color.textMuted, fontSize: 11 }}>[{g.relation}]</span>
+                    {g.recipientName} <span style={{ color: color.textMuted, fontSize: 11 }}>· {relationLabels[g.relation] ?? '关联'}</span>
                   </div>
                   <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column' }}>
                     {g.poems.slice(0, 3).map((poem, i) => (
@@ -137,7 +180,7 @@ export function PoetPanel() {
                             width: '100%',
                           }}
                         >
-                          {poem.title} · {poem.body}
+                          {relationLabels[poem.title] ?? poem.title} · {poem.body.split('·').pop()?.trim()}
                         </button>
                       </li>
                     ))}

@@ -5,6 +5,7 @@ import { getDataset } from '../data';
 import { groupBySender, totalRecipients } from '../utils/group';
 import { color, font } from '../styles/tokens';
 import type { Poet } from '../data/types';
+import { relationLabel } from './graphLabels';
 
 const labels: Record<string, string> = {
   game_count: '登场小局', game_wins: '获胜小局', game_win_rate: '小局胜率',
@@ -16,11 +17,6 @@ const labels: Record<string, string> = {
   appearances: '出场次数', position_name: '位置',
   season_profile_count: '参赛赛季数', hero_count: '使用英雄数',
 };
-const relationLabels: Record<string, string> = {
-  FACED: '交手', ROSTERED_PLAYER: '所属阵容', USED_HERO: '使用英雄', FEATURED_HERO: '队伍使用',
-  TEAMMATE_OF: '共同出场', TEAMED_WITH: '共同效力', PARTICIPATED_BY: '参赛队伍', NEXT_SEASON: '下一个赛季',
-};
-
 function displayValue(key: string, value: unknown): string {
   if (value === null || value === undefined || typeof value === 'object') return '';
   if (key.includes('rate') || key.includes('ratio') || key.endsWith('_cr')) {
@@ -160,7 +156,7 @@ export function PoetPanel() {
                       letterSpacing: '0.05em',
                     }}
                   >
-                    {g.recipientName} <span style={{ color: color.textMuted, fontSize: 11 }}>· {relationLabels[g.relation] ?? '关联'}</span>
+                    {g.recipientName} <span style={{ color: color.textMuted, fontSize: 11 }}>· {relationLabel(g.relation)}</span>
                   </div>
                   <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column' }}>
                     {g.poems.slice(0, 3).map((poem, i) => (
@@ -184,7 +180,7 @@ export function PoetPanel() {
                             width: '100%',
                           }}
                         >
-                          {relationLabels[poem.title] ?? poem.title} · {poem.body.split('·').pop()?.trim()}
+                          {relationLabel(poem.title)} · {poem.body.split('·').pop()?.trim()}
                         </button>
                       </li>
                     ))}

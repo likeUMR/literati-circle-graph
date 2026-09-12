@@ -12,17 +12,18 @@ interface Props {
   focusId?: string | null;
   lineStyle: LineStyle;
   onSelectEdge?: (edge: PoemEdge) => void;
+  selectedEdgeId?: string | null;
 }
 
 function computeBoost(edge: PoemEdge, focusId: string | null | undefined): number {
   // 未选中 → 全部均匀亮度
   if (!focusId) return lineToken.normalBoost;
-  // 选中后只有该节点"赠诗"的边（source 是它）高亮，其它全部压暗
-  if (edge.source === focusId) return lineToken.focusBoost;
+  // 选中节点的所有相邻关系高亮，方向不再影响可见性
+  if (edge.source === focusId || edge.target === focusId) return lineToken.focusBoost;
   return lineToken.dimBoost;
 }
 
-export function Edges({ poets, edges, focusId = null, lineStyle, onSelectEdge }: Props) {
+export function Edges({ poets, edges, focusId = null, lineStyle, onSelectEdge, selectedEdgeId = null }: Props) {
   const geometry = useMemo(() => {
     const idToPos = new Map<string, Vector3>();
     for (const p of poets) idToPos.set(p.id, new Vector3(p.x, p.y, p.z));
@@ -51,7 +52,7 @@ export function Edges({ poets, edges, focusId = null, lineStyle, onSelectEdge }:
       edgeIndex += 1;
 
       const baseColor = new Color(colorForPoet(e.source));
-      const boost = computeBoost(e, focusId);
+      const boost = selectedEdgeId === `${e.source}|${e.target}|${e.relation}` ? lineToken.focusBoost : computeBoost(e, focusId);
       const denom = points.length - 1;
 
       for (let i = 0; i < points.length - 1; i += 1) {
@@ -82,7 +83,7 @@ export function Edges({ poets, edges, focusId = null, lineStyle, onSelectEdge }:
     geo.setAttribute('position', new BufferAttribute(positions, 3));
     geo.setAttribute('color', new BufferAttribute(colors, 3));
     return geo;
-  }, [poets, edges, focusId, lineStyle]);
+  }, [poets, edges, focusId, lineStyle, selectedEdgeId]);
 
   return (
     <lineSegments geometry={geometry} frustumCulled={false} onClick={(event) => {

@@ -23,6 +23,7 @@ export function Scene({ data }: Props) {
   const dynasty = useAppStore((s) => s.dynasty);
   const openPanel = useAppStore((s) => s.openPanel);
   const openEdgePanel = useAppStore((s) => s.openEdgePanel);
+  const selectedEdgeId = useAppStore((s) => s.selectedEdgeId);
   const lineStyle = useAppStore((s) => s.lineStyle);
   const visibleNodeTypes = useAppStore((s) => s.visibleNodeTypes);
   const visibleEdgeTypes = useAppStore((s) => s.visibleEdgeTypes);
@@ -63,7 +64,7 @@ export function Scene({ data }: Props) {
       <ambientLight intensity={0.4} />
       <BackgroundStars />
       <group key={layoutKey}>
-        <Edges poets={positioned} edges={filtered.edges} focusId={focusId} lineStyle={lineStyle} onSelectEdge={(edge) => openEdgePanel(`${edge.source}|${edge.target}|${edge.relation}`)} />
+        <Edges poets={positioned} edges={filtered.edges} focusId={focusId} selectedEdgeId={selectedEdgeId} lineStyle={lineStyle} onSelectEdge={(edge) => openEdgePanel(`${edge.source}|${edge.target}|${edge.relation}`)} />
         {positioned.map((p) => (
           <group
             key={p.id}

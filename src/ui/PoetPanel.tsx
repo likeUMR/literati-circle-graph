@@ -11,8 +11,9 @@ const labels: Record<string, string> = {
   player_count: '关联选手', club_count: '关联俱乐部', match_count: '系列赛数', game_count_total: '小局数',
   win_rate: '系列赛胜率', series_win_rate: '系列赛胜率', champion_count: '冠军数',
   current_or_latest_player_name: '当前比赛 ID', latest_position_name: '常用位置', real_name: '真实姓名',
+  current_or_latest_short_name: '常用名称', latest_position_code: '位置编号', season_count: '参赛赛季',
   hero_name: '英雄名称', club_name: '俱乐部名称', season_name: '赛季名称', team_name: '战队名称',
-  season_count: '参赛赛季', appearances: '出场次数', position_name: '位置',
+  appearances: '出场次数', position_name: '位置',
 };
 const relationLabels: Record<string, string> = {
   FACED: '交手', ROSTERED_PLAYER: '所属阵容', USED_HERO: '使用英雄', FEATURED_HERO: '队伍使用',
@@ -29,7 +30,7 @@ function displayValue(key: string, value: unknown): string {
 
 function friendlyStats(poet: Poet): [string, string][] {
   if (!poet.stats) return [];
-  const hidden = ['id', 'source', 'data_source', 'updated_at', 'source_endpoint', 'hero_id', 'player_id', 'club_id', 'season_id', 'icon_ref', 'hero_icon', 'logo_url', 'icon_url'];
+  const hidden = ['id', 'source', 'data_source', 'updated_at', 'source_endpoint', 'hero_id', 'player_id', 'club_id', 'season_id', 'icon_ref', 'hero_icon', 'logo_url', 'icon_url', 'position_code'];
   return Object.entries(poet.stats).filter(([key, value]) => Boolean(displayValue(key, value)) && !hidden.some((x) => key === x || key.includes(x)))
     .map(([key, value]) => [labels[key] ?? key, displayValue(key, value)] as [string, string])
     .filter(([label]) => !label.includes('properties') && !label.includes('history') && !label.includes('metrics'))
@@ -38,7 +39,8 @@ function friendlyStats(poet: Poet): [string, string][] {
 
 function imageFor(poet: Poet): string | undefined {
   const stats = poet.stats ?? {};
-  const direct = stats.logo_url ?? stats.player_logo ?? stats.icon_url;
+  const direct = stats.logo_url ?? stats.avatar_url ?? stats.player_logo ?? stats.icon_url;
+  if ((!direct || typeof direct !== 'string') && Array.isArray(stats.logo_urls) && typeof stats.logo_urls[0] === 'string') return stats.logo_urls[0];
   if (typeof direct === 'string' && direct.startsWith('http')) return direct;
   if (poet.type === 'Hero') {
     const id = stats.hero_id ?? poet.id.split(':').pop();
@@ -82,11 +84,12 @@ export function PoetPanel() {
             top: 96,
             bottom: 130,
             width: 320,
-            maxWidth: 'calc(100vw - 32px)',
+            maxWidth: 'min(420px, calc(100vw - 24px))',
             background: color.panelBg,
             border: `1px solid ${color.panelBorder}`,
             borderRadius: 12,
-            padding: '14px 14px 14px 18px',
+            padding: '14px 12px 14px 16px',
+            overflow: 'hidden',
             color: color.textSecondary,
             fontFamily: font.uiSans,
             fontSize: 12,
@@ -97,9 +100,9 @@ export function PoetPanel() {
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontFamily: font.uiSerif, fontSize: 18, color: color.textPrimary }}>
+            <div style={{ minWidth: 0, display: 'flex', alignItems: 'center', gap: 10, fontFamily: font.uiSerif, fontSize: 18, color: color.textPrimary }}>
               {imageFor(poet) && <img src={imageFor(poet)} alt="" style={{ width: 38, height: 38, borderRadius: '50%', objectFit: 'cover', border: `1px solid ${color.panelBorder}` }} />}
-              <span>{poet.name}</span>
+              <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{poet.name}</span>
               <span style={{ marginLeft: 8, fontSize: 12, color: color.textMuted, fontFamily: font.uiSans }}>
                 {poet.type ?? '节点'} · {recipientCount} 个关联
               </span>
@@ -120,11 +123,11 @@ export function PoetPanel() {
             </button>
           </div>
           {poet.stats && (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 6, marginTop: 12 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 6, marginTop: 12 }}>
               {friendlyStats(poet).map(([label, value]) => (
                 <div key={label} style={{ background: 'rgba(255,255,255,0.05)', padding: '7px 6px', borderRadius: 6 }}>
                   <div style={{ color: color.textMuted, fontSize: 10 }}>{label}</div>
-                  <div style={{ color: color.goldActive, fontSize: 13, marginTop: 2 }}>{value}</div>
+                  <div style={{ color: color.goldActive, fontSize: 13, marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{value}</div>
                 </div>
               ))}
             </div>

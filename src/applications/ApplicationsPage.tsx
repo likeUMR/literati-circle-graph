@@ -16,6 +16,24 @@ interface Capability {
   featured?: boolean;
 }
 
+interface RouteStage {
+  number: string;
+  label: string;
+  title: string;
+  copy: string;
+  input: string;
+  output: string;
+  proof: string;
+  tone: Tone;
+}
+
+const routeStages: RouteStage[] = [
+  { number: '01', label: 'READ', title: '读懂资产', copy: '把节点和关系变成可解释的战队、选手、英雄与赛季洞察。', input: '图谱节点 / 关系 / 时间', output: '战队 DNA、英雄池、宿敌指数', proof: '可复用洞察组件', tone: 'amber' },
+  { number: '02', label: 'PACKAGE', title: '包装内容', copy: '同一条事实一次查询，多端输出成稿、海报、数据卡和视频脚本。', input: '洞察 + 比赛上下文', output: '赛前预告、战报、社媒内容包', proof: '发布时效 < 10 min', tone: 'cyan' },
+  { number: '03', label: 'PLAY', title: '做成互动', copy: '把真实数据变成可以参与的选择、竞猜、剧情和训练挑战。', input: '阵容 / BP / 交手历史', output: '专属游戏、BP 竞猜、阵容挑战', proof: '互动完成率 / 留存', tone: 'coral' },
+  { number: '04', label: 'CONNECT', title: '连接城市', copy: '将主场、赛程和粉丝行为组织成比赛日路线与城市电竞地图。', input: '地点 + 赛程 + 粉丝偏好', output: '打卡任务、观赛路线、联名权益', proof: '到场转化 / 消费核销', tone: 'mint' },
+];
+
 const capabilities: Capability[] = [
   { id: 'team-game', kicker: 'IP GAME', title: '战队专属游戏', copy: '将队史、宿敌与招牌英雄转化为可玩的俱乐部叙事。', source: '战队 × 选手 × 英雄', metric: '一键换队', tone: 'amber', visual: 'arena', size: 'hero', featured: true },
   { id: 'player-card', kicker: 'FAN IDENTITY', title: '选手生涯卡', copy: '自动汇总效力轨迹、常用英雄与高光赛季。', source: '选手 × 赛季', tone: 'cyan', visual: 'cards', size: 'medium' },
@@ -111,6 +129,29 @@ export function ApplicationsPage() {
         <div className="intro-copy">
           <span className="pulse-dot" />
           <p>同一套 KPL 知识资产，持续驱动游戏、内容与城市体验。</p>
+        </div>
+      </section>
+
+      <section className="route-section" aria-label="从知识资产到应用的路线">
+        <div className="route-heading">
+          <p className="eyebrow">ONE ASSET / FOUR MOVES</p>
+          <h2>从事实，到体验</h2>
+          <p>先建立可复用的洞察，再把洞察编译成内容、互动和线下场景。每一步都有明确的输入、产出与验证。</p>
+        </div>
+        <div className="route-track">
+          {routeStages.map((stage, index) => (
+            <article className={`route-stage tone-${stage.tone}`} key={stage.number}>
+              <div className="route-stage-top"><b>{stage.number}</b><span>{stage.label}</span></div>
+              <h3>{stage.title}</h3>
+              <p>{stage.copy}</p>
+              <dl>
+                <div><dt>输入</dt><dd>{stage.input}</dd></div>
+                <div><dt>产出</dt><dd>{stage.output}</dd></div>
+              </dl>
+              <footer><i />{stage.proof}</footer>
+              {index < routeStages.length - 1 && <span className="route-arrow" aria-hidden="true">→</span>}
+            </article>
+          ))}
         </div>
       </section>
 

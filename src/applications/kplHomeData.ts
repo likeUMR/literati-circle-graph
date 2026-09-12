@@ -24,6 +24,8 @@ export interface KplHomeData {
   footer: { tagline: string; copyright: string }
 }
 
+const publicBase = import.meta.env.BASE_URL;
+
 export const kplHomeData: KplHomeData = {
   brand: { name: 'KPL', tagline: 'KNOWLEDGE ASSET' },
   nav: [
@@ -40,8 +42,7 @@ export const kplHomeData: KplHomeData = {
     subline: '',
     ctaLabel: '查看应用路线',
     ctaHref: '#roadmap',
-    // Temporary visual supplied by the current prototype. Replace when new footage is available.
-    videoSrc: '/recordings/kpl-broll-5s/random-8-shots-shuffled.mp4',
+    videoSrc: `${publicBase}recordings/kpl-hero.mp4`,
   },
   stats: [
     { value: 23, label: 'KPL 赛季' },

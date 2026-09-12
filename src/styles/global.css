@@ -36,3 +36,37 @@ button {
 a {
   color: inherit;
 }
+
+/* Overlay panels use a restrained scrollbar that stays inside the star-map palette. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(232, 193, 108, 0.38) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  min-height: 42px;
+  border-radius: 3px;
+  background: rgba(232, 193, 108, 0.30);
+  border: 1px solid rgba(2, 3, 10, 0.72);
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: rgba(232, 193, 108, 0.58);
+}
+
+*::-webkit-scrollbar-button,
+*::-webkit-scrollbar-corner {
+  display: none;
+  width: 0;
+  height: 0;
+  background: transparent;
+}

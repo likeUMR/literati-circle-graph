@@ -16,6 +16,8 @@ const labels: Record<string, string> = {
   hero_name: '英雄名称', club_name: '俱乐部名称', season_name: '赛季名称', team_name: '战队名称',
   appearances: '出场次数', position_name: '位置',
   season_profile_count: '参赛赛季数', hero_count: '使用英雄数',
+  season_year: '赛季年份', stage_name: '赛事阶段', competition_format: '赛制', bo_total: '最大局数',
+  start_time_china: '开赛时间', venue_city: '比赛城市', round_count: '实际局数',
 };
 function displayValue(key: string, value: unknown): string {
   if (value === null || value === undefined || typeof value === 'object') return '';
@@ -27,11 +29,21 @@ function displayValue(key: string, value: unknown): string {
 
 function friendlyStats(poet: Poet): [string, string][] {
   if (!poet.stats) return [];
-  const hidden = ['id', 'source', 'data_source', 'updated_at', 'source_endpoint', 'hero_id', 'player_id', 'club_id', 'season_id', 'icon_ref', 'hero_icon', 'logo_url', 'logo_urls', 'icon_url', 'avatar_url', 'avatar_urls', 'position_code', 'latest_position_code', 'top_heroes', 'aliases_json', 'season_ids', 'club_ids', 'team_season_ids', 'official_roles', 'competitive_positions'];
+  const hidden = ['id', 'source', 'data_source', 'updated_at', 'source_endpoint', 'hero_id', 'player_id', 'club_id', 'season_id', 'icon_ref', 'hero_icon', 'logo_url', 'logo_urls', 'icon_url', 'avatar_url', 'avatar_urls', 'position_code', 'latest_position_code', 'top_heroes', 'aliases_json', 'season_ids', 'club_ids', 'team_season_ids', 'official_roles', 'competitive_positions', 'timestamp', 'collected_at', 'status_code', 'source_start_time_field', 'team_a_id', 'team_b_id', 'winner_side', 'winner_team_id', 'winner_club_id', 'official_match_playback_url', 'rounds'];
   return Object.entries(poet.stats).filter(([key, value]) => Boolean(displayValue(key, value)) && !hidden.some((x) => key === x || key.includes(x)) && !key.endsWith('_id') && !key.endsWith('_url') && !key.endsWith('_urls') && !key.endsWith('_code') && !key.endsWith('_at') && !key.endsWith('_json'))
     .map(([key, value]) => [labels[key] ?? key, displayValue(key, value)] as [string, string])
     .filter(([label]) => !label.includes('properties') && !label.includes('history') && !label.includes('metrics'))
     .slice(0, 6);
+}
+
+function matchTeams(poet: Poet) {
+  const s = poet.stats ?? {};
+  const value = (key: string) => typeof s[key] === 'string' || typeof s[key] === 'number' ? String(s[key]) : '';
+  const teams = [{ name: value('team_a_name'), score: value('team_a_score'), group: value('team_a_group') }, { name: value('team_b_name'), score: value('team_b_score'), group: value('team_b_group') }];
+  const rounds = Array.isArray(s.rounds) ? s.rounds as Array<Record<string, unknown>> : [];
+  const players = rounds.flatMap((round) => Array.isArray(round.players) ? round.players as Array<Record<string, unknown>> : []);
+  const uniquePlayers = [...new Map(players.map((p) => [String(p.player_id ?? p.player_name), p])).values()];
+  return { teams, rounds, players: uniquePlayers };
 }
 
 function imageFor(poet: Poet): string | undefined {
@@ -76,6 +88,7 @@ export function PoetPanel() {
   const recipientCount = useMemo(() => (poet ? totalRecipients(poet.id, data.edges) : 0), [poet, data]);
   const connections = useMemo(() => (poet ? friendlyConnections(poet, data) : []), [poet, data]);
   const overview = poet?.type === 'Hero' ? '英雄数据、版本表现与职业赛场关联' : poet?.type === 'Player' ? '职业选手生涯与赛场表现' : poet?.type === 'Club' ? '俱乐部历史、阵容与对抗网络' : poet?.type === 'Season' ? '赛事阶段、参赛队伍与版本环境' : 'KPL 比赛与数据记录';
+  const match = poet?.type === 'Match' && poet ? matchTeams(poet) : null;
 
   return (
     <AnimatePresence>
@@ -141,6 +154,7 @@ export function PoetPanel() {
             </div>
           )}
           <div style={{ marginTop: 12, color: color.textMuted, fontSize: 12, lineHeight: 1.65 }}>{overview}</div>
+          {match && <section style={{ marginTop: 14 }}><div style={{ color: color.goldActive, fontFamily: font.uiSerif, fontSize: 13, marginBottom: 7 }}>对阵双方</div><div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', gap: 8, alignItems: 'center' }}><TeamCard team={match.teams[0]} /><div style={{ color: color.textMuted, fontSize: 11 }}>VS</div><TeamCard team={match.teams[1]} /></div>{match.rounds.length > 0 && <div style={{ marginTop: 12, color: color.textMuted, fontSize: 11 }}>本场共 {match.rounds.length} 局</div>}{match.players.length > 0 && <div style={{ marginTop: 12 }}><div style={{ color: color.goldActive, fontFamily: font.uiSerif, fontSize: 13, marginBottom: 6 }}>参赛选手 · {match.players.length} 人</div><div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 5 }}>{match.players.map((p, i) => <div key={`${String(p.player_id)}-${i}`} style={{ padding: '6px 7px', borderRadius: 5, background: 'rgba(255,255,255,.04)', color: color.textSecondary, fontSize: 11, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{String(p.player_name_short || p.player_name || '未知选手')}<span style={{ color: color.textMuted, marginLeft: 5 }}>{String(p.position_name || '')}</span><div style={{ color: color.goldActive, fontSize: 10 }}>{String(p.hero_name || '')}</div></div>)}</div></div>}</section>}
           <div style={{ marginTop: 14, overflowY: 'auto', flex: 1, paddingRight: 5 }}>
             <div style={{ color: color.goldActive, fontFamily: font.uiSerif, fontSize: 13, marginBottom: 7 }}>关联网络 · {connections.length} 个重点节点</div>
             {connections.length === 0 && <div style={{ padding: '18px 0', color: color.textMuted, textAlign: 'center' }}>当前筛选条件下暂无关联记录</div>}
@@ -168,3 +182,5 @@ export function PoetPanel() {
     </AnimatePresence>
   );
 }
+
+function TeamCard({ team }: { team: { name: string; score: string; group: string } }) { return <div style={{ minWidth: 0, padding: '10px 8px', borderRadius: 7, background: 'rgba(255,255,255,.05)', textAlign: 'center' }}><div style={{ color: color.textPrimary, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{team.name || '未知队伍'}</div><div style={{ color: color.goldActive, fontSize: 22, marginTop: 2 }}>{team.score || '—'}</div>{team.group && <div style={{ color: color.textMuted, fontSize: 10 }}>{team.group}</div>}</div>; }

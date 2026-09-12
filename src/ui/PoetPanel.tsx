@@ -1,8 +1,8 @@
 import { AnimatePresence, motion } from 'framer-motion';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useAppStore } from '../state/store';
 import { getDataset } from '../data';
-import { groupBySender, totalRecipients } from '../utils/group';
+import { totalRecipients } from '../utils/group';
 import { color, font } from '../styles/tokens';
 import type { Poet } from '../data/types';
 import { relationLabel } from './graphLabels';
@@ -46,12 +46,26 @@ function imageFor(poet: Poet): string | undefined {
   return undefined;
 }
 
+function friendlyConnections(poet: Poet, data: ReturnType<typeof getDataset>) {
+  const byId = new Map(data.poets.map((p) => [p.id, p]));
+  const buckets = new Map<string, { id: string; relation: string; weight: number }>();
+  for (const edge of data.edges) {
+    const other = edge.source === poet.id ? edge.target : edge.target === poet.id ? edge.source : null;
+    if (!other || other === poet.id || !byId.has(other)) continue;
+    const key = `${other}|${edge.relation}`;
+    const item = buckets.get(key) ?? { id: other, relation: edge.relation, weight: 0 };
+    item.weight += edge.weight ?? 1;
+    buckets.set(key, item);
+  }
+  return [...buckets.values()].sort((a, b) => b.weight - a.weight).slice(0, 24).map((item) => ({ ...item, node: byId.get(item.id)! }));
+}
+
 export function PoetPanel() {
   const panelOpen = useAppStore((s) => s.panelOpen);
   const selectedPoetId = useAppStore((s) => s.selectedPoetId);
   const dynasty = useAppStore((s) => s.dynasty);
   const closePanel = useAppStore((s) => s.closePanel);
-  const openModal = useAppStore((s) => s.openModal);
+  const [expandedConnection, setExpandedConnection] = useState<string | null>(null);
 
   const data = getDataset(dynasty);
   const poet = useMemo(
@@ -59,12 +73,9 @@ export function PoetPanel() {
     [data.poets, selectedPoetId],
   );
 
-  const groups = useMemo(() => {
-    if (!poet) return [];
-    return groupBySender(poet.id, data.edges, data.poets);
-  }, [poet, data]);
-
   const recipientCount = useMemo(() => (poet ? totalRecipients(poet.id, data.edges) : 0), [poet, data]);
+  const connections = useMemo(() => (poet ? friendlyConnections(poet, data) : []), [poet, data]);
+  const overview = poet?.type === 'Hero' ? '英雄数据、版本表现与职业赛场关联' : poet?.type === 'Player' ? '职业选手生涯与赛场表现' : poet?.type === 'Club' ? '俱乐部历史、阵容与对抗网络' : poet?.type === 'Season' ? '赛事阶段、参赛队伍与版本环境' : 'KPL 比赛与数据记录';
 
   return (
     <AnimatePresence>
@@ -129,69 +140,29 @@ export function PoetPanel() {
               ))}
             </div>
           )}
-          {groups.length === 0 ? (
-            <div style={{ padding: '24px 0', color: color.textMuted, textAlign: 'center' }}>
-              暂无关联记录
-            </div>
-          ) : (
-            <div
-              style={{
-                marginTop: 10,
-                overflowY: 'auto',
-                flex: 1,
-                paddingRight: 4,
-                display: 'flex',
-                flexDirection: 'column',
-                gap: 14,
-              }}
-            >
-              {groups.map((g) => (
-                <div key={g.recipientId}>
-                  <div
-                    style={{
-                      fontFamily: font.uiSerif,
-                      color: color.goldActive,
-                      fontSize: 13,
-                      marginBottom: 4,
-                      letterSpacing: '0.05em',
-                    }}
-                  >
-                    {g.recipientName} <span style={{ color: color.textMuted, fontSize: 11 }}>· {relationLabel(g.relation)}</span>
-                  </div>
-                  <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column' }}>
-                    {g.poems.slice(0, 3).map((poem, i) => (
-                      <li key={`${poem.title}-${i}`}>
-                        <button
-                          onClick={() =>
-                            openModal({
-                              title: poem.title,
-                              body: poem.body,
-                              author: poet.name,
-                            })
-                          }
-                          style={{
-                            textAlign: 'left',
-                            padding: '4px 0',
-                            color: color.textSecondary,
-                            fontFamily: font.uiSerif,
-                            fontSize: 12.5,
-                            lineHeight: 1.5,
-                            display: 'block',
-                            width: '100%',
-                          }}
-                        >
-                          {relationLabel(poem.title)} · {poem.body.split('·').pop()?.trim()}
-                        </button>
-                      </li>
-                    ))}
-                    {g.poems.length > 3 && (
-                      <li style={{ color: color.textMuted, fontSize: 11, marginTop: 2 }}>...还有 {g.poems.length - 3} 首</li>
-                    )}
-                  </ul>
+          <div style={{ marginTop: 12, color: color.textMuted, fontSize: 12, lineHeight: 1.65 }}>{overview}</div>
+          <div style={{ marginTop: 14, overflowY: 'auto', flex: 1, paddingRight: 5 }}>
+            <div style={{ color: color.goldActive, fontFamily: font.uiSerif, fontSize: 13, marginBottom: 7 }}>关联网络 · {connections.length} 个重点节点</div>
+            {connections.length === 0 && <div style={{ padding: '18px 0', color: color.textMuted, textAlign: 'center' }}>当前筛选条件下暂无关联记录</div>}
+            {connections.map((item) => {
+              const key = `${item.id}|${item.relation}`;
+              const expanded = expandedConnection === key;
+              return <div key={key} style={{ borderBottom: '1px solid rgba(255,255,255,.06)', padding: '8px 0' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <button onClick={() => useAppStore.getState().openPanel(item.id)} style={{ flex: 1, minWidth: 0, textAlign: 'left', color: color.textSecondary, fontFamily: font.uiSerif, fontSize: 13 }}>
+                    <span style={{ color: color.goldActive }}>{item.node.name}</span><span style={{ color: color.textMuted, fontFamily: font.uiSans, fontSize: 11 }}> · {item.node.type === 'Player' ? '选手' : item.node.type === 'Club' ? '俱乐部' : item.node.type === 'Hero' ? '英雄' : item.node.type === 'Match' ? '比赛' : '赛季'}</span>
+                  </button>
+                  <span style={{ color: color.textMuted, fontSize: 11, whiteSpace: 'nowrap' }}>{relationLabel(item.relation)} · {Math.round(item.weight)}</span>
+                  <button onClick={() => setExpandedConnection(expanded ? null : key)} aria-label="展开关系详情" style={{ color: color.textMuted, fontSize: 14 }}>{expanded ? '−' : '+'}</button>
                 </div>
-              ))}
-            </div>
-          )}
+                {expanded && <div style={{ margin: '7px 0 2px', padding: '8px 10px', borderRadius: 6, background: 'rgba(255,255,255,.04)', color: color.textMuted, fontSize: 11, lineHeight: 1.6 }}>
+                  <div>关系：{relationLabel(item.relation)}</div><div>聚合记录：{Math.round(item.weight)} 条 / 次</div><div>点击名称可继续查看该节点的赛季、阵容和比赛关联。</div>
+                </div>}
+              </div>;
+            })}
+            {typeof poet?.stats?.introduction === 'string' && poet.stats.introduction && <section style={{ marginTop: 18 }}><div style={{ color: color.goldActive, fontFamily: font.uiSerif, fontSize: 13, marginBottom: 6 }}>官方介绍</div><div style={{ color: color.textMuted, lineHeight: 1.7 }}>{poet.stats.introduction as string}</div></section>}
+            <section style={{ marginTop: 18, paddingTop: 10, borderTop: '1px solid rgba(255,255,255,.07)' }}><div style={{ color: color.textMuted, fontSize: 10 }}>数据来源 · KPL 官方公开数据</div></section>
+          </div>
         </motion.aside>
       )}
     </AnimatePresence>

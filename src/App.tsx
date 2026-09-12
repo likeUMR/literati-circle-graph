@@ -5,6 +5,7 @@ import { ControlBar } from './ui/ControlBar';
 import { PoetPanel } from './ui/PoetPanel';
 import { EdgePanel } from './ui/EdgePanel';
 import { FilterPanel } from './ui/FilterPanel';
+import { LineStyleSwitcher } from './ui/LineStyleSwitcher';
 import { PoemModal } from './ui/PoemModal';
 import { getDataset } from './data';
 import { useAppStore } from './state/store';
@@ -18,6 +19,7 @@ export default function App() {
       <Scene key={dynasty} data={data} />
       <Header />
       <FilterPanel />
+      <LineStyleSwitcher />
       <ControlBar />
       <Legend />
       <PoetPanel />

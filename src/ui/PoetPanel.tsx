@@ -2,7 +2,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { useMemo } from 'react';
 import { useAppStore } from '../state/store';
 import { getDataset } from '../data';
-import { groupBySender, totalPoems, totalRecipients } from '../utils/group';
+import { groupBySender, totalRecipients } from '../utils/group';
 import { color, font } from '../styles/tokens';
 
 export function PoetPanel() {
@@ -24,7 +24,6 @@ export function PoetPanel() {
   }, [poet, data]);
 
   const recipientCount = useMemo(() => (poet ? totalRecipients(poet.id, data.edges) : 0), [poet, data]);
-  const poemCount = useMemo(() => (poet ? totalPoems(poet.id, data.edges) : 0), [poet, data]);
 
   return (
     <AnimatePresence>
@@ -59,7 +58,7 @@ export function PoetPanel() {
             <div style={{ fontFamily: font.uiSerif, fontSize: 16, color: color.textPrimary }}>
               {poet.name}
               <span style={{ marginLeft: 8, fontSize: 12, color: color.textMuted, fontFamily: font.uiSans }}>
-                ({recipientCount}人/{poemCount}首)
+                {poet.type ?? '节点'} · {recipientCount} 个关联
               </span>
             </div>
             <button
@@ -77,9 +76,19 @@ export function PoetPanel() {
               ×
             </button>
           </div>
+          {poet.stats && (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 6, marginTop: 12 }}>
+              {Object.entries(poet.stats).slice(0, 6).map(([label, value]) => (
+                <div key={label} style={{ background: 'rgba(255,255,255,0.05)', padding: '7px 6px', borderRadius: 6 }}>
+                  <div style={{ color: color.textMuted, fontSize: 10 }}>{label}</div>
+                  <div style={{ color: color.goldActive, fontSize: 13, marginTop: 2 }}>{String(value)}</div>
+                </div>
+              ))}
+            </div>
+          )}
           {groups.length === 0 ? (
             <div style={{ padding: '24px 0', color: color.textMuted, textAlign: 'center' }}>
-              暂无赠诗记录
+              暂无关联记录
             </div>
           ) : (
             <div
@@ -128,7 +137,7 @@ export function PoetPanel() {
                             width: '100%',
                           }}
                         >
-                          {poem.title}
+                          {poem.title} · {poem.body}
                         </button>
                       </li>
                     ))}

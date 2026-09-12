@@ -16,7 +16,12 @@ export function StarNode({ poet, isFocus = false, hasFocus = false }: Props) {
   const coreTex = getStarCoreTexture();
   const glowTex = getStarGlowTexture();
 
-  const baseColor = useMemo(() => colorForPoet(poet.id), [poet.id]);
+  const baseColor = useMemo(() => {
+    const palette: Record<string, string> = {
+      Season: '#E8C16C', Club: '#69A7FF', Player: '#FF6B7A', Hero: '#52D6C5', Match: '#A78BFA',
+    };
+    return palette[poet.type ?? ''] ?? colorForPoet(poet.id);
+  }, [poet.id, poet.type]);
 
   // 选中态：焦点节点更亮、非焦点节点轻度压暗（突出焦点）
   const isDim = hasFocus && !isFocus;

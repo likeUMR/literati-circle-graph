@@ -2,7 +2,6 @@ import { Scene } from './scene/Scene';
 import { Header } from './ui/Header';
 import { Legend } from './ui/Legend';
 import { ControlBar } from './ui/ControlBar';
-import { LineStyleSwitcher } from './ui/LineStyleSwitcher';
 import { PoetPanel } from './ui/PoetPanel';
 import { PoemModal } from './ui/PoemModal';
 import { getDataset } from './data';
@@ -16,7 +15,6 @@ export default function App() {
     <>
       <Scene key={dynasty} data={data} />
       <Header />
-      <LineStyleSwitcher />
       <ControlBar />
       <Legend />
       <PoetPanel />

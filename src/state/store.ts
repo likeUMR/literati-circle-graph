@@ -32,7 +32,7 @@ interface AppState {
 
 export const useAppStore = create<AppState>((set) => ({
   dynasty: '宋',
-  selectedPoetId: 'sushi',     // 默认聚焦苏轼，相机进入即飞向
+  selectedPoetId: null,
   panelOpen: false,
   modalPoem: null,
   viewMode: 'default',

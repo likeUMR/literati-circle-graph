@@ -51,7 +51,7 @@ export function Legend() {
           paddingBottom: 4,
         }}
       >
-        {mode === 'in' ? '被提最多' : '赠诗最多'}
+        {mode === 'in' ? '关联最多' : '出边最多'}
       </div>
       <div
         style={{

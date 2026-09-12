@@ -22,11 +22,7 @@ const activeBtn = {
 };
 
 export function ControlBar() {
-  const treeAxis = useAppStore((s) => s.treeAxis);
-  const yFlipped = useAppStore((s) => s.yFlipped);
   const autoRotate = useAppStore((s) => s.autoRotate);
-  const toggleTreeAxis = useAppStore((s) => s.toggleTreeAxis);
-  const toggleYFlip = useAppStore((s) => s.toggleYFlip);
   const toggleAutoRotate = useAppStore((s) => s.toggleAutoRotate);
   const resetGlobalView = useAppStore((s) => s.resetGlobalView);
 
@@ -55,16 +51,10 @@ export function ControlBar() {
         }}
       >
         <button onClick={resetGlobalView} style={baseBtn}>
-          显示全部
-        </button>
-        <button onClick={toggleTreeAxis} style={baseBtn}>
-          {treeAxis === 'vertical' ? '↕ 纵向布局' : '↔ 横向布局'}
-        </button>
-        <button onClick={toggleYFlip} style={baseBtn}>
-          {yFlipped ? '↕ Y轴已翻转' : '↕ Y轴未翻转'}
+          重置视角
         </button>
         <button onClick={toggleAutoRotate} style={autoRotate ? activeBtn : baseBtn}>
-          {autoRotate ? '停止旋转' : '开始旋转'}
+          {autoRotate ? '暂停巡游' : '开始巡游'}
         </button>
       </div>
     </div>

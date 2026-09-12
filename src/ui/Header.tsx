@@ -59,7 +59,7 @@ export function Header() {
             textShadow: '0 0 12px rgba(232, 193, 108, 0.4)',
           }}
         >
-          诗云星图
+          KPL 星图
         </div>
       </div>
       <div style={{ width: 200, display: 'flex', justifyContent: 'flex-end', pointerEvents: 'auto', position: 'relative' }}>
@@ -68,7 +68,7 @@ export function Header() {
           onChange={(e) => setSearch(e.target.value)}
           onFocus={() => setFocused(true)}
           onBlur={() => setTimeout(() => setFocused(false), 120)}
-          placeholder="搜索诗人..."
+          placeholder="搜索选手、俱乐部、英雄..."
           style={{
             width: 180,
             height: 30,
@@ -120,7 +120,7 @@ export function Header() {
                   }}
                 >
                   {p.name}
-                  {p.zi && <span style={{ marginLeft: 8, color: color.textMuted, fontSize: 11 }}>字 {p.zi}</span>}
+                  {p.type && <span style={{ marginLeft: 8, color: color.textMuted, fontSize: 11 }}>{p.type}</span>}
                 </button>
               </li>
             ))}

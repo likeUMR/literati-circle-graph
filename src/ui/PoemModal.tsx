@@ -80,7 +80,7 @@ export function PoemModal() {
             >
               {modalPoem.title}
               <div style={{ fontSize: 12, opacity: 0.6, marginTop: 12, fontWeight: 400, letterSpacing: '0.1em' }}>
-                宋·{modalPoem.author}
+                KPL · {modalPoem.author}
               </div>
             </div>
 

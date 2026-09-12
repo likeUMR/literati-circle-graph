@@ -1,5 +1,5 @@
 export type Dynasty = '唐' | '宋';
-export type Relation = '提及' | '寄' | '赠' | '赠别' | '寄和' | '新和' | '和' | '哀挽';
+export type Relation = string;
 
 export interface Poet {
   id: string;
@@ -10,6 +10,8 @@ export interface Poet {
   death?: number;
   dynasty: Dynasty;
   bio?: string;
+  type?: 'Season' | 'Club' | 'Player' | 'Hero' | 'Match';
+  stats?: Record<string, unknown>;
 }
 
 export interface PoemEdge {
@@ -20,6 +22,9 @@ export interface PoemEdge {
     title: string;
     body: string;
   };
+  weight?: number;
+  sourceValue?: number;
+  targetValue?: number;
 }
 
 export interface DynastyDataset {

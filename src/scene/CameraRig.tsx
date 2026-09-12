@@ -31,6 +31,13 @@ export function CameraRig({ poets, controls }: Props) {
   const prevSel = useRef<string | null>(null);
 
   const idIndex = useMemo(() => new Map(poets.map((p, i) => [p.id, i])), [poets]);
+  const fittedDistance = useMemo(() => {
+    const radii = poets
+      .map((p) => Math.hypot(p.x, p.y))
+      .sort((a, b) => a - b);
+    const visibleRadius = radii[Math.floor(radii.length * 0.94)] ?? 0;
+    return Math.max(cameraToken.defaultDistance, Math.min(2200, visibleRadius * 2.15));
+  }, [poets]);
 
   useFrame((_, dt) => {
     const { selectedPoetId, autoRotate } = useAppStore.getState();
@@ -73,7 +80,7 @@ export function CameraRig({ poets, controls }: Props) {
       }
     } else {
       targetLook.current.set(0, 0, 0);
-      targetPos.current.set(0, cameraToken.defaultLiftY, cameraToken.defaultDistance);
+      targetPos.current.set(0, cameraToken.defaultLiftY, fittedDistance);
     }
 
     if (flying.current) {

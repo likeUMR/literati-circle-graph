@@ -67,5 +67,5 @@ export const kplHomeData: KplHomeData = {
     { label: '城市体验', color: '#5ea7d7', image: '/assets/application-routes/city-experience.jpg' },
     { label: '社交传播', color: '#dc708b', image: '/assets/application-routes/social-sharing.jpg' },
   ],
-  footer: { tagline: '让每一条数据精彩', copyright: '2026 / V1' },
+  footer: { tagline: '让每一条数据更精彩', copyright: '2026 / V1' },
 }

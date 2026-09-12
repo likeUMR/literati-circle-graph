@@ -19,6 +19,6 @@ const edges = readJsonl('edges_all.jsonl').map((edge) => ({
   targetValue: edge.target_value ?? undefined,
   poem: { title: edge.type, body: `${edge.type} · ${edge.primary_value ?? 1}` },
 }));
-const output = `import type { DynastyDataset, Poet, PoemEdge } from './types';\n\nconst poets: Poet[] = ${JSON.stringify(nodes)};\nconst edges: PoemEdge[] = ${JSON.stringify(edges)};\nexport const kplData: DynastyDataset = { poets, edges };\n`;
+const output = `// @ts-nocheck -- generated literals exceed TypeScript's union complexity limit.\nimport type { DynastyDataset, Poet, PoemEdge } from './types';\n\nconst poets: Poet[] = ${JSON.stringify(nodes)};\nconst edges: PoemEdge[] = ${JSON.stringify(edges)};\nexport const kplData: DynastyDataset = { poets, edges };\n`;
 fs.writeFileSync(new URL('../src/data/kpl.generated.ts', import.meta.url), output);
 console.log(`Generated ${nodes.length} nodes and ${edges.length} edges`);

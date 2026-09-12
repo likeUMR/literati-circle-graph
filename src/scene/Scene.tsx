@@ -22,14 +22,23 @@ export function Scene({ data }: Props) {
   const focusId = useAppStore((s) => s.selectedPoetId);
   const dynasty = useAppStore((s) => s.dynasty);
   const openPanel = useAppStore((s) => s.openPanel);
+  const openEdgePanel = useAppStore((s) => s.openEdgePanel);
   const lineStyle = useAppStore((s) => s.lineStyle);
+  const visibleNodeTypes = useAppStore((s) => s.visibleNodeTypes);
+  const visibleEdgeTypes = useAppStore((s) => s.visibleEdgeTypes);
 
   const treeAxis = useAppStore((s) => s.treeAxis);
   const yFlipped = useAppStore((s) => s.yFlipped);
 
+  const filtered = useMemo(() => {
+    const poets = data.poets.filter((p) => visibleNodeTypes[p.type ?? 'Player']);
+    const ids = new Set(poets.map((p) => p.id));
+    const edges = data.edges.filter((e) => ids.has(e.source) && ids.has(e.target) && visibleEdgeTypes[e.relation] !== false);
+    return { poets, edges };
+  }, [data, visibleNodeTypes, visibleEdgeTypes]);
   const positioned = useMemo(
-    () => layoutForce(data.poets, data.edges, { axis: treeAxis, yFlip: yFlipped }),
-    [data, treeAxis, yFlipped],
+    () => layoutForce(filtered.poets, filtered.edges, { axis: treeAxis, yFlip: yFlipped }),
+    [filtered, treeAxis, yFlipped],
   );
   const layoutKey = `${dynasty}-${treeAxis}-${yFlipped ? 'y' : 'n'}`;
 
@@ -54,7 +63,7 @@ export function Scene({ data }: Props) {
       <ambientLight intensity={0.4} />
       <BackgroundStars />
       <group key={layoutKey}>
-        <Edges poets={positioned} edges={data.edges} focusId={focusId} lineStyle={lineStyle} />
+        <Edges poets={positioned} edges={filtered.edges} focusId={focusId} lineStyle={lineStyle} onSelectEdge={(edge) => openEdgePanel(`${edge.source}|${edge.target}|${edge.relation}`)} />
         {positioned.map((p) => (
           <group
             key={p.id}

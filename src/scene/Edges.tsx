@@ -11,6 +11,7 @@ interface Props {
   edges: PoemEdge[];
   focusId?: string | null;
   lineStyle: LineStyle;
+  onSelectEdge?: (edge: PoemEdge) => void;
 }
 
 function computeBoost(edge: PoemEdge, focusId: string | null | undefined): number {
@@ -21,7 +22,7 @@ function computeBoost(edge: PoemEdge, focusId: string | null | undefined): numbe
   return lineToken.dimBoost;
 }
 
-export function Edges({ poets, edges, focusId = null, lineStyle }: Props) {
+export function Edges({ poets, edges, focusId = null, lineStyle, onSelectEdge }: Props) {
   const geometry = useMemo(() => {
     const idToPos = new Map<string, Vector3>();
     for (const p of poets) idToPos.set(p.id, new Vector3(p.x, p.y, p.z));
@@ -84,7 +85,12 @@ export function Edges({ poets, edges, focusId = null, lineStyle }: Props) {
   }, [poets, edges, focusId, lineStyle]);
 
   return (
-    <lineSegments geometry={geometry} frustumCulled={false}>
+    <lineSegments geometry={geometry} frustumCulled={false} onClick={(event) => {
+      if (!onSelectEdge || event.index == null) return;
+      const segs = lineStyle === 'straight' ? 1 : lineStyle === 'quadratic' || lineStyle === 'neural' ? 32 : lineToken.curveSegments;
+      const edge = validEdgeAtIndex(edges, event.index, segs);
+      if (edge) onSelectEdge(edge);
+    }}>
       <lineBasicMaterial
         vertexColors
         transparent
@@ -95,4 +101,8 @@ export function Edges({ poets, edges, focusId = null, lineStyle }: Props) {
       />
     </lineSegments>
   );
+}
+
+function validEdgeAtIndex(edges: PoemEdge[], segmentIndex: number, segs: number): PoemEdge | undefined {
+  return edges[Math.floor(segmentIndex / segs)];
 }
